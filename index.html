@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous"/>
+
+    <title>Let Chat</title>
+
+    <style>
+        #messages img {
+            max-width: 40px;
+            border-radius: 200px;
+        }
+
+        #messages pre {
+            margin-bottom: 0;
+            max-width: 400px;
+            white-space: break-spaces;
+        }
+
+        #messages > div {
+            margin-bottom: 2em;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+    <div id="messages"></div>
+
+    <h3 class="mb-2">Authorization</h3>
+    <form action="" class="d-flex gap-4 mb-4" id="authForm">
+        <input class="form-control" id="token" rows="3" placeholder="Token"/>
+        <input class="form-control" id="chat" placeholder="User ID"/>
+        <input class="form-control" id="lang" placeholder="Lang"/>
+        <button class="btn btn-primary">Auth</button>
+    </form>
+
+    <h3 class="mb-2">Message send</h3>
+    <form action="" class="d-flex gap-4" id=messageForm>
+        <input class="form-control" id="text" rows="3" placeholder="Text"/>
+        <button class="btn btn-primary">Send</button>
+    </form>
+</div>
+<script src="https://cdn.socket.io/4.3.2/socket.io.min.js"
+        integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+<script>
+    const authForm = document.querySelector('#authForm')
+    let messages = [];
+    let profile
+
+    if (authForm) {
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault()
+            const token = document.querySelector('#token')
+            const chat = document.querySelector('#chat')
+            const lang = document.querySelector('#lang')
+
+            if (token) {
+                connect(token.value, chat.value, lang.value)
+            }
+        })
+
+        async function connect(token, chat, lang) {
+            const messageFormEl = document.querySelector('#messageForm')
+            const socket = io('http://localhost:3000', {
+                auth: {
+                    token: 'bearer ' + token,
+                    lang: lang
+                }
+            });
+
+            socket.emit('subscribe', {})
+
+            await getProfile();
+            await getMessages();
+            function getMessages() {
+                fetch('http://localhost:3000/chats/' + chat, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        data.forEach((el) => {
+                            messages.push(el);
+                        });
+
+                        messages = messages.reverse()
+                        renderMessages()
+                    })
+                    .catch((err) => console.error(err));
+            }
+            async function getProfile() {
+                profile = await (await fetch('http://localhost:3000/users', {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                })).json()
+            }
+            async function sendMessage(text) {
+                const data = await (await fetch('http://localhost:3000/chats', {
+                    method: "POST",
+                    body: JSON.stringify({
+                        text: text,
+                        to_user: chat
+                    }),
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                })).json()
+            }
+            function renderMessages() {
+                const messagesEl = document.querySelector("#messages")
+                console.log(messages)
+                if (messagesEl) {
+                    messagesEl.innerHTML = ""
+
+                    messages.forEach(mess => {
+                        let isMe = mess.from_user.id === profile.id
+                        const el = document.createElement('div')
+                        el.innerHTML = `<p>${mess.from_user.nickname}</p><pre>${mess.text}</pre>`
+                        el.classList.add('d-flex', 'align-items-center', 'gap-2')
+                        el.classList.add(isMe ? 'justify-content-end': 'justify-content-start')
+                        messagesEl.append(el)
+                    })
+                }
+            }
+
+            if(messageFormEl) {
+                messageFormEl.addEventListener('submit', (e) => {
+                    e.preventDefault()
+                    const text = document.querySelector('#text')
+                    sendMessage(text.value)
+                })
+            }
+
+            //Слушаем событие recMessage, чтобы получать сообщения, отправленные пользователями
+            socket.on('new_message', (message) => {
+                messages.push(message)
+                renderMessages()
+            })
+        }
+    }
+</script>
+</body>
+</html>

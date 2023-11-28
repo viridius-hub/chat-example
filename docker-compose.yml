@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: chat-example_app
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: production
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 8888:${PORT}
+    depends_on:
+      - postgres
+  postgres:
+    container_name: chat-example_postgres
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - '5433:5432'
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+volumes:
+  pg-data:
