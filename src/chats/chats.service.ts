@@ -23,6 +23,11 @@ export class ChatsService {
 
         if(!fromUser || !toUser) throw new NotFoundException()
 
+        console.log(await this.gptService.translate({
+            text: body.text,
+            lang: 'ru'
+        }))
+
         await this.chatsGateway.sendMessage([toUser.id, fromUser.id], {
             text: body.text,
             from_user: fromUser,

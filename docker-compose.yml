@@ -14,7 +14,7 @@ services:
     volumes:
       - .:/usr/src/app
     ports:
-      - 8888:${PORT}
+      - 80:${PORT}
     depends_on:
       - postgres
   postgres:

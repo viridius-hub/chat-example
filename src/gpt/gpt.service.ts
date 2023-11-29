@@ -6,20 +6,22 @@ import {Stream} from "typeorm";
 export class GptService {
     constructor(private readonly httpService: HttpService) {}
 
-    private apiKey = "org-fYC1uVemh7NrTH0ZVfn6N1EV"
+    private org = "org-fYC1uVemh7NrTH0ZVfn6N1EV"
+    private apiKey = "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"
     private baseURL = "https://api.openai.com/v1/chat/completions"
 
     async translate(dto: {text: string, lang: string}): Promise<Stream> {
         try {
             const {data} = await this.httpService.axiosRef.post(this.baseURL, {
+                model: 'gpt-3.5-turbo-0613',
                 messages: [{
                     role: "user",
                     content: `Translate this text into ${dto.lang}: ${dto.text}`
                 }],
             }, {
                 headers: {
-                    "Authorization": 'bearer ' + this.apiKey,
-                    "OpenAI-Organization": ""
+                    "Authorization": 'Bearer ' + this.apiKey,
+                    "OpenAI-Organization": this.org
                 },
             })
 
