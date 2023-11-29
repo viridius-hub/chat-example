@@ -40,7 +40,6 @@
     <form action="" class="d-flex gap-4 mb-4" id="authForm">
         <input class="form-control" id="token" rows="3" placeholder="Token"/>
         <input class="form-control" id="chat" placeholder="User ID"/>
-        <input class="form-control" id="lang" placeholder="Lang"/>
         <button class="btn btn-primary">Auth</button>
     </form>
 
@@ -68,19 +67,17 @@
             e.preventDefault()
             const token = document.querySelector('#token')
             const chat = document.querySelector('#chat')
-            const lang = document.querySelector('#lang')
 
             if (token) {
-                connect(token.value, chat.value, lang.value)
+                connect(token.value, chat.value)
             }
         })
 
-        async function connect(token, chat, lang) {
+        async function connect(token, chat) {
             const messageFormEl = document.querySelector('#messageForm')
             const socket = io('http://localhost:3000', {
                 auth: {
                     token: 'bearer ' + token,
-                    lang: lang
                 }
             });
 
@@ -119,7 +116,7 @@
                     method: "POST",
                     body: JSON.stringify({
                         text: text,
-                        to_user: chat
+                        to_user: chat,
                     }),
                     headers: {
                         "Authorization": "Bearer " + token,
@@ -152,7 +149,7 @@
                 })
             }
 
-            //Слушаем событие recMessage, чтобы получать сообщения, отправленные пользователями
+            //Слушаем событие new_message, чтобы получать сообщения, отправленные пользователями
             socket.on('new_message', (message) => {
                 messages.push(message)
                 renderMessages()

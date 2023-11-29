@@ -13,6 +13,9 @@ export class Users {
     @Column({unique: true})
     nickname: string;
 
+    @Column({default: 'english'})
+    lang: string;
+
     @Column()
     password: string;
 

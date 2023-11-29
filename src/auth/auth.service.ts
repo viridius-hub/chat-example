@@ -17,8 +17,8 @@ export class AuthService {
         return null;
     }
 
-    async registrationUser(body: { nickname: string, password: string }) {
-        const user = await this.usersService.create(body.nickname, body.password)
+    async registrationUser(body: { nickname: string, password: string, lang?: string }) {
+        const user = await this.usersService.create(body.nickname, body.password, body.lang)
         return {
             access_token: this.jwtService.sign({id: user.id, nickname: user.nickname}),
         };

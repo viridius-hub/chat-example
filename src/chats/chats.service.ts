@@ -18,17 +18,25 @@ export class ChatsService {
     }
 
     async sendMessage(user: Users, body: { to_user: string, text?: string }): Promise<Chats> {
+
+
         const fromUser = await this.userService.findOneById(user.id)
         const toUser = await this.userService.findOneById(body.to_user)
 
         if(!fromUser || !toUser) throw new NotFoundException()
 
-        // console.log(await this.gptService.translate({
-        //     text: body.text,
-        //     lang: 'ru'
-        // }))
+        const translateText = toUser.lang ? await this.gptService.translate({
+            text: body.text,
+            lang: toUser.lang
+        }) : body.text
 
-        await this.chatsGateway.sendMessage([toUser.id, fromUser.id], {
+        await this.chatsGateway.sendMessage([toUser.id], {
+            text: translateText,
+            from_user: fromUser,
+            to_user: toUser
+        })
+
+        await this.chatsGateway.sendMessage([fromUser.id], {
             text: body.text,
             from_user: fromUser,
             to_user: toUser
@@ -52,7 +60,8 @@ export class ChatsService {
     }
 
     async getHistoryMessages(user: Users, userId: string) {
-        return await this.chatsRepository.find({
+        const _user = await this.userService.findOneById(user.id)
+        const messages= await this.chatsRepository.find({
             where: [
                 {
                     from_user: [
@@ -76,5 +85,18 @@ export class ChatsService {
             ],
             relations: {from_user: true, to_user: true}
         });
+
+        for (let i = 0; i < messages.length; i++) {
+            const message = messages[i]
+
+            if(message.to_user.id === user.id) {
+                message.text = _user.lang ? await this.gptService.translate({
+                    text: message.text,
+                    lang: _user.lang
+                }) : message.text
+            }
+        }
+
+        return messages
     }
 }

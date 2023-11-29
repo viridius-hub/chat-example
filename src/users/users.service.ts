@@ -16,7 +16,8 @@ export class UsersService {
             select: {
                 id: true,
                 password: true,
-                nickname: true
+                nickname: true,
+                lang: true
             }
         })
     }
@@ -34,10 +35,11 @@ export class UsersService {
         })
     }
 
-    async create(nickname: string, password: string): Promise<Users> {
+    async create(nickname: string, password: string, lang?: string): Promise<Users> {
         return await this.usersRepository.save({
             nickname: nickname,
-            password: password
+            password: password,
+            lang: lang || 'english'
         })
     }
 }
