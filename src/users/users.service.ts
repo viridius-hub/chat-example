@@ -1,11 +1,24 @@
 import {Injectable} from '@nestjs/common';
 import {Users} from "./entities/users.entity";
 import {InjectRepository} from "@nestjs/typeorm";
-import {Repository} from "typeorm";
+import {Like, Repository} from "typeorm";
 
 @Injectable()
 export class UsersService {
     constructor(@InjectRepository(Users) private usersRepository: Repository<Users>,) {
+    }
+
+    async search(user: Users, text: string) {
+        return await this.usersRepository.find({
+            where: {
+                nickname: Like(`%${text}%`)
+            },
+            select: {
+                id: true,
+                nickname: true,
+                lang: true
+            }
+        })
     }
 
     async findOneById(id: string): Promise<Users> {

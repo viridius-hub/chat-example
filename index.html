@@ -151,8 +151,13 @@
 
             //Слушаем событие new_message, чтобы получать сообщения, отправленные пользователями
             socket.on('new_message', (message) => {
+                console.log('new_message', message)
                 messages.push(message)
                 renderMessages()
+            })
+
+            socket.on('new_chat', (message) => {
+                console.log('new_chat', message)
             })
         }
     }

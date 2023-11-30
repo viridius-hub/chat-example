@@ -22,13 +22,11 @@ export class ChatsGateway {
     constructor() {
     }
 
-    public sendMessage(ids: string[], event: any) {
-
+    public sendMessage(ids: string[], name: string, event: any) {
         const _ids: string[] = []
         for (let i = 0; i < ids.length; i++) {
             const id = ids[i]
             const connections = this.getConnectsToUser(id.toString())
-            console.log(connections)
 
             for (let j = 0; j < connections.length; j++) {
                 const connection = connections[j]
@@ -38,7 +36,7 @@ export class ChatsGateway {
 
         this.server
             .to(_ids)
-            .emit('new_message', event);
+            .emit(name, event);
     }
 
     /* Get connects socket by User */

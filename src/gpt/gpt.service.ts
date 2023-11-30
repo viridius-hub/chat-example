@@ -12,7 +12,7 @@ export class GptService {
     async translate(dto: { text: string, lang: string }): Promise<string> {
         try {
             const {data} = await this.httpService.axiosRef.post(this.baseURL, {
-                model: 'gpt-3.5-turbo',
+                model: 'gpt-4',
                 messages: [
                     {role: "system", content: `You are a useful assistant who translates text into ${dto.lang}.`},
                     {
