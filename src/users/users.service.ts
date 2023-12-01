@@ -9,16 +9,10 @@ export class UsersService {
     }
 
     async search(user: Users, text: string) {
-        return await this.usersRepository.find({
-            where: {
-                nickname: Like(`%${text}%`)
-            },
-            select: {
-                id: true,
-                nickname: true,
-                lang: true
-            }
-        })
+        return  await this.usersRepository.createQueryBuilder('user')
+          .where("user.nickname like LOWER(:name)", { name:`%${text.toLowerCase()}%` })
+          .select(['user.id', 'user.nickname', 'user.lang'])
+          .getMany();
     }
 
     async findOneById(id: string): Promise<Users> {
@@ -45,6 +39,12 @@ export class UsersService {
                 password: true,
                 nickname: true
             }
+        })
+    }
+
+    async updateLang(id: string, lang: string) {
+        await this.usersRepository.update({id: id}, {
+            lang: lang
         })
     }
 
