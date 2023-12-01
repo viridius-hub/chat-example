@@ -29,6 +29,7 @@ export class GptService {
             return data['choices'][0]['message']['content']
         } catch (e) {
             console.error(e.response)
+            return dto.text
         }
     }
 }

@@ -83,8 +83,6 @@ export class ChatsService {
       relations: {from_user: true, to_user: true}
     });
 
-    console.log(messages)
-
     const resArr = []
 
     messages.map((_mess) => {
@@ -122,11 +120,21 @@ export class ChatsService {
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i]
 
-      if (message.to_user.id === user.id) {
-        message.text = _user.lang ? await this.gptService.translate({
-          text: message.text,
-          lang: _user.lang
-        }) : message.text
+      if(_user.lang) {
+        try {
+          const translate = await this.gptService.translate({
+            text: message.text,
+            lang: _user.lang
+          })
+
+          if(translate) {
+            if (message.to_user.id === user.id) {
+              message.text = _user.lang ? translate : message.text
+            }
+          }
+        } catch (e) {
+          console.error(e)
+        }
       }
     }
 
