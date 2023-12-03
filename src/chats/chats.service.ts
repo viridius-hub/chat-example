@@ -71,7 +71,8 @@ export class ChatsService {
     })
 
     return await this.chatsRepository.save({
-      audio: file.filename,
+      audio: translateAudio,
+      original_audio: file.filename,
       from_user: {id: fromUser.id},
       to_user: {id: toUser.id}
     });

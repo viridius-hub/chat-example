@@ -25,6 +25,9 @@ export class Chats {
     @Column({nullable: true})
     audio: string;
 
+    @Column({nullable: true})
+    original_audio: string;
+
     @CreateDateColumn({type: 'timestamptz'})
     createdAt: Date;
 
