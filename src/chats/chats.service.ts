@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
-import {In, Repository} from "typeorm";
+import {Repository} from "typeorm";
 import {Chats} from "./entities/chats.entity";
 import {Users} from "../users/entities/users.entity";
 import {ChatsGateway} from "./chats.gateway";
@@ -17,18 +17,8 @@ export class ChatsService {
   ) {
   }
 
-  async sendMessage(user: Users, body: { to_user: string, text?: string }): Promise<Chats> {
-    const fromUser = await this.userService.findOneById(user.id)
-    const toUser = await this.userService.findOneById(body.to_user)
-
-    if (!fromUser || !toUser) throw new NotFoundException()
-
-    const translateText = toUser.lang ? await this.gptService.translate({
-      text: body.text,
-      lang: toUser.lang
-    }) : body.text
-
-    const isFirst = await this.chatsRepository.exist({
+  private async isFirstMessage(fromUser: Users, toUser: Users): Promise<boolean> {
+    return  await this.chatsRepository.exist({
       where: [
         {
           from_user: {id: fromUser.id},
@@ -40,8 +30,65 @@ export class ChatsService {
         }
       ]
     })
+  }
 
-    if (!isFirst) {
+  async sendMessageVoice(user: Users, body: { to_user: string }, file: Express.Multer.File) {
+    const fromUser = await this.userService.findOneById(user.id)
+    const toUser = await this.userService.findOneById(body.to_user)
+
+    if (!fromUser || !toUser) throw new NotFoundException()
+    if (!file) throw new BadRequestException()
+
+    if (!(await this.isFirstMessage(fromUser, toUser))) {
+      await this.chatsGateway.sendMessage([toUser.id], 'new_chat', {
+        user: fromUser,
+      })
+
+      await this.chatsGateway.sendMessage([fromUser.id], 'new_chat', {
+        user: toUser
+      })
+    }
+
+    const translateAudio = toUser.lang ? await this.gptService.translateAudio({
+      file: file,
+      lang: toUser.lang
+    }) : file.filename
+
+    console.log(translateAudio)
+
+    await this.chatsGateway.sendMessage([toUser.id], 'new_message', {
+      voice: translateAudio,
+      original_voice: file.filename,
+      from_user: fromUser,
+      to_user: toUser
+    })
+
+    await this.chatsGateway.sendMessage([fromUser.id], 'new_message', {
+      voice: file.filename,
+      original_voice: file.filename,
+      from_user: fromUser,
+      to_user: toUser
+    })
+
+    return await this.chatsRepository.save({
+      audio: file.filename,
+      from_user: {id: fromUser.id},
+      to_user: {id: toUser.id}
+    });
+  }
+
+  async sendMessage(user: Users, body: { to_user: string, text?: string }): Promise<Chats> {
+    const fromUser = await this.userService.findOneById(user.id)
+    const toUser = await this.userService.findOneById(body.to_user)
+
+    if (!fromUser || !toUser) throw new NotFoundException()
+
+    const translateText = toUser.lang ? await this.gptService.translate({
+      text: body.text,
+      lang: toUser.lang
+    }) : body.text
+
+    if (!(await this.isFirstMessage(fromUser, toUser))) {
       await this.chatsGateway.sendMessage([toUser.id], 'new_chat', {
         user: fromUser,
       })
@@ -53,12 +100,14 @@ export class ChatsService {
 
     await this.chatsGateway.sendMessage([toUser.id], 'new_message', {
       text: translateText,
+      original_text: body.text,
       from_user: fromUser,
       to_user: toUser
     })
 
     await this.chatsGateway.sendMessage([fromUser.id], 'new_message', {
       text: body.text,
+      original_text: body.text,
       from_user: fromUser,
       to_user: toUser
     })

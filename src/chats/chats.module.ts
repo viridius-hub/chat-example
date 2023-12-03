@@ -6,10 +6,14 @@ import {Chats} from "./entities/chats.entity";
 import { ChatsController } from './chats.controller';
 import {UsersModule} from "../users/users.module";
 import {GptModule} from "../gpt/gpt.module";
+import {MulterModule} from "@nestjs/platform-express";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Chats]),
+        MulterModule.register({
+            dest: '/upload',
+        }),
         GptModule,
         UsersModule
     ],

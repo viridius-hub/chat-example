@@ -19,8 +19,11 @@ export class Chats {
     @JoinColumn({name: "from_user_id"})
     from_user: Users;
 
-    @Column()
+    @Column({nullable: true})
     text: string;
+
+    @Column({nullable: true})
+    audio: string;
 
     @CreateDateColumn({type: 'timestamptz'})
     createdAt: Date;
