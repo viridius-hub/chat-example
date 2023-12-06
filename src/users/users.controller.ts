@@ -10,7 +10,7 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @Get()
     async getUser(@Req() req) {
-        return req['user']
+        return await this.usersService.findOne(req['user'].nickname)
     }
 
     @UseGuards(JwtAuthGuard)

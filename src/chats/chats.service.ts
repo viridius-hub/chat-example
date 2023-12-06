@@ -54,8 +54,6 @@ export class ChatsService {
       lang: toUser.lang
     }) : file.filename
 
-    console.log(translateAudio)
-
     await this.chatsGateway.sendMessage([toUser.id], 'new_message', {
       voice: translateAudio,
       original_voice: file.filename,
